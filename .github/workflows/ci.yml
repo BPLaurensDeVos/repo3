@@ -43,17 +43,19 @@ jobs:
           -d '{"event_type":"build-artifact"}'
 
       - name: Wait for Repo2 Workflow to Complete
-        if: env.repo2_status_code != '200'
+        if: ${{ env.repo2_status_code != '200' }}
         run: |
           REPO="BPLaurensDeVos/repo2"
           BRANCH="main"
           echo "Checking for the latest workflow run in $REPO on branch $BRANCH..."
-          
+
           while true; do
-            RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.PAT_TOKEN }}" \
+            RESPONSE=$(curl -s -H "Authorization: Bearer ${{ secrets.PAT_TOKEN }}" \
                           "https://api.github.com/repos/$REPO/actions/runs?branch=$BRANCH&status=in_progress")
-            RUN_COUNT=$(echo "$RESPONSE" | jq '.total_count')
-            if [[ $RUN_COUNT -eq 0 ]]; then
+            
+            RUN_COUNT=$(echo "$RESPONSE" | jq '.workflow_runs | length')
+            
+            if [[ "$RUN_COUNT" -eq 0 ]]; then
               echo "No running workflows detected. Proceeding..."
               break
             else
@@ -61,6 +63,7 @@ jobs:
               sleep 10
             fi
           done
+
 
       - name: Recheck Repo2 Artifact Availability
         if: env.repo2_status_code != '200'
