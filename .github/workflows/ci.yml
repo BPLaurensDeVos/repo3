@@ -46,7 +46,7 @@ jobs:
         if: env.repo2_status_code != '200'
         run: |
           echo "Waiting for Repo2 artifact to be published..."
-          sleep 60
+          sleep 90
 
 
       - name: Recheck Repo2 Artifact Availability
