@@ -42,27 +42,11 @@ jobs:
           https://api.github.com/repos/BPLaurensDeVos/repo2/dispatches \
           -d '{"event_type":"build-artifact"}'
       
-      - name: Wait for Repo2 Workflow to Complete
-        if: ${{ env.repo2_status_code != '200' }}
+      - name: Wait for Repo2 Artifact to be Published
+        if: env.repo2_status_code != '200'
         run: |
-          REPO="BPLaurensDeVos/repo2"
-          BRANCH="main"
-          echo "Checking for the latest workflow run in $REPO on branch $BRANCH..."
-
-          while true; do
-            RESPONSE=$(curl -s -H "Authorization: Bearer ${{ secrets.PAT_TOKEN }}" \
-                            "https://api.github.com/repos/$REPO/actions/runs?branch=$BRANCH&per_page=1")
-            
-            STATUS=$(echo "$RESPONSE" | grep -oP '"status":\s*"\K[^"]+')
-            
-            if [[ "$STATUS" != "in_progress" && "$STATUS" != "queued" ]]; then
-              echo "No running workflows detected. Proceeding..."
-              break
-            else
-              echo "Repo2 workflow is still running. Waiting for 10 seconds..."
-              sleep 10
-            fi
-          done
+          echo "Waiting for Repo2 artifact to be published..."
+          sleep 60
 
 
       - name: Recheck Repo2 Artifact Availability
