@@ -41,9 +41,15 @@ jobs:
           -H "Authorization: token ${{ secrets.PAT_TOKEN }}" \
           https://api.github.com/repos/BPLaurensDeVos/repo2/dispatches \
           -d '{"event_type":"build-artifact"}'
+      
+        - name: AUTHENTICATE github cli
+        run: | 
+          echo "${{ secrets.PAT_TOKEN }}" | gh auth login --with-token
 
       - name: Wait for Repo2 Workflow to Complete
-        if: ${{ env.repo2_status_code != '200' }} 
+        if: ${{ env.repo2_status_code != '200' }}
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           REPO="BPLaurensDeVos/repo2"
           BRANCH="main"
@@ -60,8 +66,6 @@ jobs:
               sleep 10
             fi
           done
-
-
 
       - name: Recheck Repo2 Artifact Availability
         if: env.repo2_status_code != '200'
