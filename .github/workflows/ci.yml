@@ -42,24 +42,20 @@ jobs:
           https://api.github.com/repos/BPLaurensDeVos/repo2/dispatches \
           -d '{"event_type":"build-artifact"}'
       
-      - name: Authenticate GitHub CLI 
-        if: ${{ env.repo2_status_code != '200' }}
-        run: |
-          echo "${{ secrets.PAT_TOKEN }}" | gh auth login --with-token
-
       - name: Wait for Repo2 Workflow to Complete
         if: ${{ env.repo2_status_code != '200' }}
-        env:
-          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           REPO="BPLaurensDeVos/repo2"
           BRANCH="main"
           echo "Checking for the latest workflow run in $REPO on branch $BRANCH..."
 
           while true; do
-            RUN_COUNT=$(gh run list --repo "$REPO" --branch "$BRANCH" --status in_progress --json status --jq '. | length')
-
-            if [[ "$RUN_COUNT" -eq 0 ]]; then
+            RESPONSE=$(curl -s -H "Authorization: Bearer ${{ secrets.PAT_TOKEN }}" \
+                            "https://api.github.com/repos/$REPO/actions/runs?branch=$BRANCH&per_page=1")
+            
+            STATUS=$(echo "$RESPONSE" | grep -oP '"status":\s*"\K[^"]+')
+            
+            if [[ "$STATUS" != "in_progress" && "$STATUS" != "queued" ]]; then
               echo "No running workflows detected. Proceeding..."
               break
             else
@@ -67,6 +63,7 @@ jobs:
               sleep 10
             fi
           done
+
 
       - name: Recheck Repo2 Artifact Availability
         if: ${{ env.repo2_status_code != '200' }}
