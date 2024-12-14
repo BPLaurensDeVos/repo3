@@ -32,8 +32,8 @@ jobs:
           echo "Artifact Status Code: $STATUS_CODE"
           echo "repo2_status_code=$STATUS_CODE" >> $GITHUB_ENV
 
-      - name: Trigger Repo2 if Artifact is Missing 
-        if: env.repo2_status_code != '200'
+      - name: Trigger Repo2 if Artifact is Missing
+        if: ${{ env.repo2_status_code != '200' }}
         run: |
           echo "Repo2 artifact not found. Triggering Repo2..."
           curl -X POST \
@@ -42,8 +42,9 @@ jobs:
           https://api.github.com/repos/BPLaurensDeVos/repo2/dispatches \
           -d '{"event_type":"build-artifact"}'
       
-        - name: AUTHENTICATE github cli
-        run: | 
+      - name: Authenticate GitHub CLI
+        if: ${{ env.repo2_status_code != '200' }}
+        run: |
           echo "${{ secrets.PAT_TOKEN }}" | gh auth login --with-token
 
       - name: Wait for Repo2 Workflow to Complete
@@ -68,7 +69,7 @@ jobs:
           done
 
       - name: Recheck Repo2 Artifact Availability
-        if: env.repo2_status_code != '200'
+        if: ${{ env.repo2_status_code != '200' }}
         id: recheck-artifact
         run: |
           STATUS_CODE=$(curl -L -u ${{ github.actor }}:${{ secrets.PAT_TOKEN }} \
@@ -79,15 +80,14 @@ jobs:
           echo "Rechecked Artifact Status Code: $STATUS_CODE"
           echo "repo2_recheck_status_code=$STATUS_CODE" >> $GITHUB_ENV
 
-
       - name: Fail Workflow if Artifact Still Missing
-        if: env.repo2_status_code != '200' && env.repo2_recheck_status_code != '200'
+        if: ${{ env.repo2_status_code != '200' && env.repo2_recheck_status_code != '200' }}
         run: |
           echo "Artifact still missing after waiting. Failing workflow..."
           exit 1
 
       - name: Configure Maven to Use GitHub Packages
-        if: env.repo2_status_code == '200' || env.repo2_recheck_status_code == '200'
+        if: ${{ env.repo2_status_code == '200' || env.repo2_recheck_status_code == '200' }}
         run: |
           mkdir -p ~/.m2
           echo "<settings xmlns='http://maven.apache.org/SETTINGS/1.0.0'
@@ -109,7 +109,7 @@ jobs:
           cat ~/.m2/settings.xml
 
       - name: Build and Test
-        if: env.repo2_status_code == '200' || env.repo2_recheck_status_code == '200'
+        if: ${{ env.repo2_status_code == '200' || env.repo2_recheck_status_code == '200' }}
         run: mvn clean package
 
       - name: Publish to GitHub Packages
