@@ -42,12 +42,30 @@ jobs:
           https://api.github.com/repos/BPLaurensDeVos/repo2/dispatches \
           -d '{"event_type":"build-artifact"}'
 
-      - name: Wait and Recheck Artifact Availability
+      - name: Wait for Repo2 Workflow to Complete
+        if: env.repo2_status_code != '200'
+        run: |
+          REPO="BPLaurensDeVos/repo2"
+          BRANCH="main"
+          echo "Checking for the latest workflow run in $REPO on branch $BRANCH..."
+          
+          while true; do
+            RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.PAT_TOKEN }}" \
+                          "https://api.github.com/repos/$REPO/actions/runs?branch=$BRANCH&status=in_progress")
+            RUN_COUNT=$(echo "$RESPONSE" | jq '.total_count')
+            if [[ $RUN_COUNT -eq 0 ]]; then
+              echo "No running workflows detected. Proceeding..."
+              break
+            else
+              echo "Repo2 workflow is still running. Waiting for 10 seconds..."
+              sleep 10
+            fi
+          done
+
+      - name: Recheck Repo2 Artifact Availability
         if: env.repo2_status_code != '200'
         id: recheck-artifact
         run: |
-          echo "Waiting for Repo2 artifact to be published..."
-          sleep 30
           STATUS_CODE=$(curl -L -u ${{ github.actor }}:${{ secrets.PAT_TOKEN }} \
                         -s \
                         -o /dev/null \
@@ -55,6 +73,7 @@ jobs:
                         https://maven.pkg.github.com/BPLaurensDeVos/repo2/com/example/repo2/repo2/1.0/repo2-1.0.jar)
           echo "Rechecked Artifact Status Code: $STATUS_CODE"
           echo "repo2_recheck_status_code=$STATUS_CODE" >> $GITHUB_ENV
+
 
       - name: Fail Workflow if Artifact Still Missing
         if: env.repo2_status_code != '200' && env.repo2_recheck_status_code != '200'
