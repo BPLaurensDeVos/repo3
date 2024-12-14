@@ -47,6 +47,13 @@
     </plugins>
   </build>
 
+  <distributionManagement>
+    <repository>
+      <id>github-repo3</id>
+      <url>https://maven.pkg.github.com/BPLaurensDeVos/repo3</url>
+    </repository>
+  </distributionManagement>
+
   <repositories>
     <repository>
       <id>github-repo1</id>
