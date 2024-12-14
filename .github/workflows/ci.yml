@@ -43,7 +43,7 @@ jobs:
           -d '{"event_type":"build-artifact"}'
 
       - name: Wait for Repo2 Workflow to Complete
-        if: ${{ env.repo2_status_code != '200' }}
+        if: ${{ env.repo2_status_code != '200' }} 
         run: |
           REPO="BPLaurensDeVos/repo2"
           BRANCH="main"
