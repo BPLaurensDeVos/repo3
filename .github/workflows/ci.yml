@@ -42,7 +42,7 @@ jobs:
           https://api.github.com/repos/BPLaurensDeVos/repo2/dispatches \
           -d '{"event_type":"build-artifact"}'
       
-      - name: Authenticate GitHub CLI
+      - name: Authenticate GitHub CLI 
         if: ${{ env.repo2_status_code != '200' }}
         run: |
           echo "${{ secrets.PAT_TOKEN }}" | gh auth login --with-token
