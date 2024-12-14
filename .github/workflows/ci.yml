@@ -50,11 +50,8 @@ jobs:
           echo "Checking for the latest workflow run in $REPO on branch $BRANCH..."
 
           while true; do
-            RESPONSE=$(curl -s -H "Authorization: Bearer ${{ secrets.PAT_TOKEN }}" \
-                          "https://api.github.com/repos/$REPO/actions/runs?branch=$BRANCH&status=in_progress")
-            
-            RUN_COUNT=$(echo "$RESPONSE" | jq '.workflow_runs | length')
-            
+            RUN_COUNT=$(gh run list --repo "$REPO" --branch "$BRANCH" --status in_progress --json status --jq '. | length')
+
             if [[ "$RUN_COUNT" -eq 0 ]]; then
               echo "No running workflows detected. Proceeding..."
               break
@@ -63,6 +60,7 @@ jobs:
               sleep 10
             fi
           done
+
 
 
       - name: Recheck Repo2 Artifact Availability
